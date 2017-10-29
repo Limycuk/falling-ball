@@ -6,7 +6,7 @@ import './styles.css';
 import background from '../../static/images/background.jpg'
 
 const Game = ({ getGameAreaRef, startFallingDown, resetFalling,
-  isDisabledStartFalling, isDisabledResetFalling}) => {
+  isDisabledStartFalling, isDisabledResetFalling, spentTime }) => {
   return (
     <div className="game">
       <canvas
@@ -22,6 +22,7 @@ const Game = ({ getGameAreaRef, startFallingDown, resetFalling,
       >
         Start
       </button>
+      <div className="game__spent-time">{spentTime}</div>
       <button
         className="game__control"
         disabled={isDisabledResetFalling}
@@ -38,7 +39,8 @@ Game.propTypes = {
   startFallingDown: PropTypes.func.isRequired,
   resetFalling: PropTypes.func.isRequired,
   isDisabledStartFalling: PropTypes.bool.isRequired,
-	isDisabledResetFalling: PropTypes.bool.isRequired,
+  isDisabledResetFalling: PropTypes.bool.isRequired,
+	spentTime: PropTypes.string.isRequired,
 }
 
 export default Game;
