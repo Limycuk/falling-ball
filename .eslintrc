@@ -1,0 +1,7 @@
+{
+  "extends": ["standard", "react-app", "plugin:jsx-a11y/recommended"],
+  "plugins": ["jsx-a11y"],
+  "rules": {
+    "comma-dangle": ["error", "only-multiline"],
+  }
+}

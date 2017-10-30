@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import moment from 'moment'
 
 import Game from '../components/Game'
-import ballImage from '../static/images/ball.png'
 import Ball from '../services/Ball'
 import {
 	BALL_START_POSITION_X,
@@ -11,7 +10,8 @@ import {
 	BALL_HEIGHT,
 	BALL_FINISH_POSITION_X,
 	BALL_FINISH_POSITION_Y,
-	BALL_ANIMATE_TIME
+	BALL_ANIMATE_TIME,
+	GRAVITY_FORCE
 } from '../constants'
 
 class GameContainer extends Component {
@@ -20,12 +20,13 @@ class GameContainer extends Component {
 
 		this.gameAreaRef = null
 		this.ball = null
-		this.tickTimeout = null
+		this.repeater = null
 		this.startTickTime = null
-		this.startTime = null
+		this.pixelsPerMeter = null
 
 		this.state = {
 			isFalling: false,
+			startTime: null,
 			finishTime: null,
 		}
 	}
@@ -37,30 +38,29 @@ class GameContainer extends Component {
 	componentDidMount () {
 		const context = this.gameAreaRef.getContext("2d")
 		this.ball = new Ball(context, BALL_START_POSITION_X, BALL_START_POSITION_Y, BALL_WIDTH, BALL_HEIGHT)
+
+		const heightInMeters = GRAVITY_FORCE * Math.pow((BALL_ANIMATE_TIME / 1000), 2) / 2
+		const heightInPixels = BALL_FINISH_POSITION_Y - BALL_START_POSITION_Y
+		this.pixelsPerMeter = heightInPixels / heightInMeters
 	}
 
-	fallingDown = (remainingTime, step) => {
-		this.startTickTime = moment()
+	fallingDown = () => {
+		this.repeater = requestAnimationFrame(this.fallingDown)
+		let step
 
-		if (this.startTime === null) {
-			this.startTime = this.startTickTime
+		if (this.startTickTime === null) {
+			step = 0
+		} else {
+			const duration = moment().diff(this.state.startTime) / 1000
+			const fps = 1000 / moment().diff(this.startTickTime)
+			step = GRAVITY_FORCE * duration * this.pixelsPerMeter / fps
 		}
-
+		
+		this.startTickTime = moment()
 		this.ball.moveOn(0, step)
 
-		if (!this.ball.inPosition(BALL_FINISH_POSITION_X, BALL_FINISH_POSITION_Y, 0, step)) {
-				requestAnimationFrame(() => {
-					const tickTime = moment().diff(this.startTickTime)
-					const updatedRemainingTime = remainingTime - tickTime
-					const newStep = tickTime * (BALL_FINISH_POSITION_Y - this.ball.position) / updatedRemainingTime
-					/*console.log('OHHH == ', (9.8 * tickTime * tickTime / (2 * 1000 * 1000)))
-
-					const newStep = Math.sqrt(2 * 9.8 * (9.8 * tickTime * tickTime / (2 * 1000 * 1000))) / 0.029 * tickTime
-console.log('www == ', tickTime, newStep, updatedRemainingTime)*/
-					this.fallingDown(updatedRemainingTime, Math.round(newStep))
-				})
-
-		} else {
+		if (this.ball.inPosition(BALL_FINISH_POSITION_X, BALL_FINISH_POSITION_Y, 0, step)) {
+			cancelAnimationFrame(this.repeater)
 			this.setState({
 				finishTime: moment()
 			})
@@ -68,17 +68,16 @@ console.log('www == ', tickTime, newStep, updatedRemainingTime)*/
 	}
 
 	returnBall = () => {
-		clearTimeout(this.tickTimeout)
+		cancelAnimationFrame(this.repeater)
 		this.ball.moveTo(BALL_START_POSITION_X, BALL_START_POSITION_Y)
 	}
 
 	startFallingDown = () => {
-		const step = 5
-
 		this.setState({
 			isFalling: true,
+			startTime: moment(),
 			finishTime: null,
-		}, () => this.fallingDown(BALL_ANIMATE_TIME, step))
+		}, this.fallingDown)
 	}
 
 	resetFalling = () => {
@@ -101,7 +100,7 @@ console.log('www == ', tickTime, newStep, updatedRemainingTime)*/
 			isDisabledStartFalling: isFalling,
 			isDisabledResetFalling: !isFalling,
 			spentTime: startTime !== null && finishTime !== null
-				? `${finishTime.diff(this.startTime).toString()} ms`
+				? `${finishTime.diff(startTime).toString()} ms`
 				: '-' 
 		}
 		return (

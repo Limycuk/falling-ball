@@ -3,8 +3,6 @@ import PropTypes from 'prop-types'
 
 import './styles.css';
 
-import background from '../../static/images/background.jpg'
-
 const Game = ({ getGameAreaRef, startFallingDown, resetFalling,
   isDisabledStartFalling, isDisabledResetFalling, spentTime }) => {
   return (
